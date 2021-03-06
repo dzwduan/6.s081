@@ -79,7 +79,7 @@ allocpid() {
   
   acquire(&pid_lock);
   pid = nextpid;
-  nextpid = nextpid + 1;
+  nextpid = nextpid + 1; //未考虑溢出
   release(&pid_lock);
 
   return pid;
@@ -95,7 +95,7 @@ allocproc(void)
   struct proc *p;
 
   for(p = proc; p < &proc[NPROC]; p++) {
-    acquire(&p->lock);
+    acquire(&p->lock); //注意加锁
     if(p->state == UNUSED) {
       goto found;
     } else {
@@ -259,15 +259,17 @@ int
 fork(void)
 {
   int i, pid;
-  struct proc *np;
-  struct proc *p = myproc();
+  struct proc *np; // 新创建的proc
+  struct proc *p = myproc(); //p是当前进程
 
   // Allocate process.
+  //分配一个新进程的结构体给np
   if((np = allocproc()) == 0){
     return -1;
   }
 
   // Copy user memory from parent to child.
+  //拷贝进程的地址空间
   if(uvmcopy(p->pagetable, np->pagetable, p->sz) < 0){
     freeproc(np);
     release(&np->lock);
@@ -275,15 +277,17 @@ fork(void)
   }
   np->sz = p->sz;
 
-  np->parent = p;
+  np->parent = p; //父进程为当前进程
 
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
 
   // Cause fork to return 0 in the child.
+  //子进程返回0
   np->trapframe->a0 = 0;
 
   // increment reference counts on open file descriptors.
+  //文件描述符的拷贝
   for(i = 0; i < NOFILE; i++)
     if(p->ofile[i])
       np->ofile[i] = filedup(p->ofile[i]);

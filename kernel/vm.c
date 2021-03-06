@@ -305,6 +305,8 @@ uvmfree(pagetable_t pagetable, uint64 sz)
 // physical memory.
 // returns 0 on success, -1 on failure.
 // frees any allocated pages on failure.
+// 该实现与现代os不同，没有copy-on-write,只读不需要复制，只需要在任何一方写入之前复制。
+// cow:将读写权限的页面标记为只读，写时产生缺页异常，则为写的进程复制页面
 int
 uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
 {
@@ -320,9 +322,9 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
       panic("uvmcopy: page not present");
     pa = PTE2PA(*pte);
     flags = PTE_FLAGS(*pte);
-    if((mem = kalloc()) == 0)
+    if((mem = kalloc()) == 0)        //kalloc分配一页
       goto err;
-    memmove(mem, (char*)pa, PGSIZE);
+    memmove(mem, (char*)pa, PGSIZE); //直接复制内存
     if(mappages(new, i, PGSIZE, (uint64)mem, flags) != 0){
       kfree(mem);
       goto err;

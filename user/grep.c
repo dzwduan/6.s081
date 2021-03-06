@@ -14,6 +14,7 @@ grep(char *pattern, int fd)
   char *p, *q;
 
   m = 0;
+  //fd -> buffer
   while((n = read(fd, buf+m, sizeof(buf)-m-1)) > 0){
     m += n;
     buf[m] = '\0';

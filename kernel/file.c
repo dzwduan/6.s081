@@ -50,9 +50,9 @@ filedup(struct file *f)
   acquire(&ftable.lock);
   if(f->ref < 1)
     panic("filedup");
-  f->ref++;
+  f->ref++;  // 引用计数++
   release(&ftable.lock);
-  return f;
+  return f; // 原样返回参数
 }
 
 // Close file f.  (Decrement ref count, close when reaches 0.)
